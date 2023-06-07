@@ -6,7 +6,6 @@ int howmany;
 char* whom = "world";
 module_param(howmany, int, S_IRUGO);
 module_param(whom, charp, S_IRUGO);
-
 static int __init hello_init(void)
 {
         int i;
