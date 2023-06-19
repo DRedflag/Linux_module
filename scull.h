@@ -3,6 +3,18 @@
 
 #include <linux/ioctl.h>
 #include <linux/mutex.h>
+#include <linux/cdev.h>
+
+#undef PDEBUG
+#ifdef SCULL_DEBUG
+#ifdef __KERNEL__
+#define PDEBUG(fmt, args...) printk(KERN_DEBUG "scull: " fmt, ## args)
+#else
+#define PDEBUG(fmt, args...) fprintf(stderr, fmt, ## args)
+#endif
+#else
+#define PDEBUG(fmt, args...)
+#endif
 
 #ifndef SCULL_MAJOR
 #define SCULL_MAJOR 0 /* dynamic major by default */
@@ -39,8 +51,8 @@
  */
 
 struct scull_qset {
-        void** data;
-        struct scull_qset* next;
+        void** data;                    /* note: this is pointer to a array of pointer (1000) that point to an area of memory of 4000 bytes */
+        struct scull_qset* next;        /* Quantum data make a linked list */
 };
 
 /*
@@ -48,7 +60,37 @@ struct scull_qset {
  */
 
 struct scull_dev {
-        struct scull_qset* data; 
-        
+        struct scull_qset* data;        /* Pointer to the first quantum set of data */ 
+        int quantum;                    /* Size of a each quantum */
+        int qset;                       /* Size of the quantum array(table of pointer) */
+        unsigned long size;
+        struct cdev cdev;
+        struct mutex mutex;
 };
+
+
+/*
+ * Split minors in two parts
+ */
+
+#define TYPE(minor)     (((minor) >> 4) & 0xf)
+#define NUM(minor)      ((minor) & 0xf)
+
+/*
+ * The different configurable parameters
+ */
+
+extern int scull_major;
+extern int scull_nr_devs;
+extern int scull_quantum;
+extern int scull_qset;
+
+
+/*
+ * Prototypes for shared functions
+ */
+
+int     scull_trim(struct scull_dev* dev);
+ssize_t scull_read(struct file* filp, char __user *buf, size_t count, loff_t*  f_pos);
+ssize_t scull_write(struct file* filp, const char __user *buf, size_t count, loff_t* f_pos);
 #endif

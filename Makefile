@@ -1,3 +1,11 @@
+ifeq ($(DEBUG), y)
+	DEBFLAGS = -O -g -DSCULL_DEBUG
+else
+	DEBFLAGS = -O2
+endif
+
+
+ccflags-y += $(DEBFLAGS)
 
 ifeq ($(KERNELRELEASE),)
 
@@ -14,11 +22,15 @@ modules_install:
 	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules_install
 
 clean:
-	rm -rf *.o *~ core .depend .*.cmd *.ko *.mod.c .tmp_versions
+	rm -rf *.o *~ core .depend .*.cmd *.ko *.mod.c .tmp_versions Module.symvers modules.order scull.mod
 
 .PHONY: modules modules_install clean
 
 else
     # called from kernel build system: just declare what our modules are
-    obj-m := hello.o
+
+
+	scull-objs = main.o
+
+	obj-m := scull.o
 endif
