@@ -2,7 +2,7 @@
   {
     "arguments": [
       "/usr/bin/gcc",
-      "-Wp,-MMD,/home/redbanner/Project/Linux_module/.hello.o.d",
+      "-Wp,-MMD,/home/redbanner/project/Linux_module/.main.o.d",
       "-nostdinc",
       "-I./arch/x86/include",
       "-I./arch/x86/include/generated",
@@ -96,27 +96,28 @@
       "-Wno-packed-not-aligned",
       "-g",
       "-gdwarf-5",
+      "-O2",
       "-fsanitize=bounds",
       "-fsanitize=shift",
       "-fsanitize=bool",
       "-fsanitize=enum",
       "-DMODULE",
-      "-DKBUILD_BASENAME=\"hello\"",
-      "-DKBUILD_MODNAME=\"hello\"",
-      "-D__KBUILD_MODNAME=kmod_hello",
+      "-DKBUILD_BASENAME=\"main\"",
+      "-DKBUILD_MODNAME=\"scull\"",
+      "-D__KBUILD_MODNAME=kmod_scull",
       "-c",
       "-o",
-      "/home/redbanner/Project/Linux_module/hello.o",
-      "/home/redbanner/Project/Linux_module/hello.c"
+      "/home/redbanner/project/Linux_module/main.o",
+      "/home/redbanner/project/Linux_module/main.c"
     ],
-    "directory": "/usr/src/linux-headers-5.19.0-43-generic",
-    "file": "/home/redbanner/Project/Linux_module/hello.c",
-    "output": "/home/redbanner/Project/Linux_module/hello.o"
+    "directory": "/usr/src/linux-headers-5.19.0-46-generic",
+    "file": "/home/redbanner/project/Linux_module/main.c",
+    "output": "/home/redbanner/project/Linux_module/main.o"
   },
   {
     "arguments": [
       "/usr/bin/gcc",
-      "-Wp,-MMD,/home/redbanner/Project/Linux_module/.hello.mod.o.d",
+      "-Wp,-MMD,/home/redbanner/project/Linux_module/.scull.mod.o.d",
       "-nostdinc",
       "-I./arch/x86/include",
       "-I./arch/x86/include/generated",
@@ -215,16 +216,16 @@
       "-fsanitize=bool",
       "-fsanitize=enum",
       "-DMODULE",
-      "-DKBUILD_BASENAME=\"hello.mod\"",
-      "-DKBUILD_MODNAME=\"hello\"",
-      "-D__KBUILD_MODNAME=kmod_hello",
+      "-DKBUILD_BASENAME=\"scull.mod\"",
+      "-DKBUILD_MODNAME=\"scull\"",
+      "-D__KBUILD_MODNAME=kmod_scull",
       "-c",
       "-o",
-      "/home/redbanner/Project/Linux_module/hello.mod.o",
-      "/home/redbanner/Project/Linux_module/hello.mod.c"
+      "/home/redbanner/project/Linux_module/scull.mod.o",
+      "/home/redbanner/project/Linux_module/scull.mod.c"
     ],
-    "directory": "/usr/src/linux-headers-5.19.0-43-generic",
-    "file": "/home/redbanner/Project/Linux_module/hello.mod.c",
-    "output": "/home/redbanner/Project/Linux_module/hello.mod.o"
+    "directory": "/usr/src/linux-headers-5.19.0-46-generic",
+    "file": "/home/redbanner/project/Linux_module/scull.mod.c",
+    "output": "/home/redbanner/project/Linux_module/scull.mod.o"
   }
 ]

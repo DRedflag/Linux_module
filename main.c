@@ -33,6 +33,91 @@ MODULE_LICENSE("GPL");
 
 struct scull_dev *scull_devices;
 
+#ifdef SCULL_DEBUG
+
+struct proc_dir_entry *scull_proc_entry;
+static void *scull_seq_start(struct seq_file *s, loff_t *p);
+static void *scull_seq_next(struct seq_file *s, void* v, loff_t* p);
+static void scull_seq_stop(struct seq_file *s, void *v);
+static int scull_seq_show(struct seq_file *s, void *v);
+struct seq_operations seq_ops = {
+        .next = scull_seq_next,
+        .start = scull_seq_start,
+        .stop = scull_seq_stop,
+        .show = scull_seq_show
+};
+
+static void *scull_seq_start(struct seq_file *s, loff_t *p)
+{
+        /*
+         * The start of the seq_file iterator
+         * Shoule return the pointer to the start of the 
+         * scull_devices, or NULL if the offset p go out of range
+         */
+        return *p < scull_nr_devs ? scull_devices + *p : NULL;
+}
+
+static void *scull_seq_next(struct seq_file *s, void* v, loff_t *p)
+{
+        /*
+         * Invoking to iterate to the next item,
+         * should increment the offset p and return the pointer 
+         * to the next scull_devices.
+         * The pointer v is the iterator (point to scull_device)
+         */
+        ++*p;
+        return *p < scull_nr_devs ? scull_devices + *p : NULL;
+}
+
+static void scull_seq_stop(struct seq_file *s, void *v)
+{
+        /* Iterator stop, do nothing ... */
+}
+
+static int scull_seq_show(struct seq_file *s, void *v)
+{
+        struct scull_dev *dev = (struct scull_dev *)v;
+        struct scull_qset *qs;
+        int i, j;
+
+        if (mutex_lock_interruptible(&dev->mutex))
+                return -ERESTARTSYS;
+        seq_printf(s, "Device %i, qset %i, quantum %i, size %li\n", (int)(dev-scull_devices), dev->qset, dev->quantum, dev->size);
+        for (qs = dev->data; qs != NULL; qs = qs->next){
+                seq_printf(s, "\titem at %p, qset at %p\n", qs, qs->data);
+                for (i = 0; i < dev->qset; i++){
+                        if (qs->data[i])
+                                seq_printf(s, "\t\t%i: %p\n", i, qs->data[i]);
+                }
+        }
+        mutex_unlock(&dev->mutex);
+        return 0;
+}
+
+static int scull_seq_open(struct inode *inode, struct file* filp)
+{
+        return seq_open(filp, &seq_ops);
+}
+
+struct proc_ops scull_proc_ops = {
+        .proc_open = scull_seq_open,
+        .proc_read = seq_read,
+        .proc_lseek = seq_lseek,
+        .proc_release = seq_release
+};
+
+static void scull_proc_create(void){
+        scull_proc_entry = proc_create_data("scullseq", 0, NULL, &scull_proc_ops, NULL);
+}
+
+static void scull_proc_remove(void)
+{
+        proc_remove(scull_proc_entry);
+}
+#endif /* SCULL_DEBUG */
+
+
+
 int scull_trim(struct scull_dev *dev){
         struct scull_qset *next, *dptr;
         int qset = dev->qset;
@@ -155,6 +240,8 @@ ssize_t scull_read(struct file *filp, char __user *buf, size_t count, loff_t *f_
         }
         *f_pos += count;
         retval = count;
+        PDEBUG("dptr now at %p, compare to dev->data %p, userspace pointer at %p, is scull_devices pointer still the same %p", dptr, dev->data, buf, scull_devices);
+
 out:
         mutex_unlock(&dev->mutex);
         return retval;
@@ -192,11 +279,13 @@ ssize_t scull_write(struct file *filp, const char __user *buf, size_t count, lof
                 if (!dptr->data[s_pos])
                         goto out;
         }
+        PDEBUG("dptr now at %p, compare to dev->data %p, userspace pointer at %p, is scull_devices pointer still the same %p", dptr, dev->data, buf, scull_devices);
 
         if (count > quantum - q_pos)
                 count = quantum - q_pos;
 
 
+        
         if (copy_from_user(dptr->data[s_pos] + q_pos, buf, count)){
                 retval = -EFAULT;
                 goto out;
@@ -204,7 +293,7 @@ ssize_t scull_write(struct file *filp, const char __user *buf, size_t count, lof
         *f_pos += count;
         retval = count;
 
-        PDEBUG("write total %ld, at qset %d, quantum %d, offset %d", count, item, s_pos, q_pos);
+        PDEBUG("dptr now at %p, compare to dev->data %p, userspace pointer at %p, is scull_devices pointer still the same %p", dptr, dev->data, buf, scull_devices);
         /* Update the size of device. */
         if(dev->size < *f_pos)
                 dev->size = *f_pos;
@@ -267,6 +356,7 @@ void scull_cleanup_module(void)
                 kfree(scull_devices);
         }
 #ifdef SCULL_DEBUG
+        scull_proc_remove();
 #endif
         unregister_chrdev_region(devno, scull_nr_devs);
 
@@ -323,7 +413,10 @@ int scull_init_module(void)
                 mutex_init(&scull_devices[i].mutex);
                 scull_setup_cdev(&scull_devices[i], i);
         }
-        
+#ifdef SCULL_DEBUG
+        scull_proc_create();
+#endif
+       
         return 0;
 
 fail:
